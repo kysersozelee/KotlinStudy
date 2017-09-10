@@ -1,0 +1,3 @@
+[submodule "JsonParser/klaxon"]
+	path = JsonParser/klaxon
+	url = https://github.com/cbeust/klaxon.git
