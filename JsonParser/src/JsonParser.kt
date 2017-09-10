@@ -1,89 +1,132 @@
-class JsonParser {
-	var currentOffset: Int = 0
-	var index: Int = 0
-	var nestingLevel: Int = 0
-	var buffer: CharArray = charArrayOf()
+import java.io.*
 
-	fun parse(jsonString: String): JsonValue {
-		init(jsonString)
-		var firstChar: Char = readChar()
-		when (firstChar) {
-			'{' -> {
-				this.nestingLevel++
-				var result = JsonObject()
-				var name = readName()
-				var data = readData()
-				result.add(name, data)
-				while (this.index < buffer.size && readEndChar()) {
-					name = readName()
-					data = readData()
-					result.add(name, data)
-				}
-				if (this.nestingLevel > 0 && this.index < buffer.size) {
-					for (i in 0 until this.nestingLevel) {
-						var end = readChar()
-						if ('}'.equals(end)) {
-							this.nestingLevel--
-							continue
-						} else {
-							throw Exception("invalid parse")
-						}
-					}
-				} else if (this.nestingLevel > 0) {
-					throw Exception("invalid parse")
-				}
-				return result
-			}
-			'[' -> {
-				var result = JsonArray()
-				return result
-			}
-		}
-		throw Exception("invalid string")
+
+class Manager(reader: Reader) {
+	var index = 1
+
+	fun isSpace(c: Char): Boolean {
+		return c == ' ' || c == '\r' || c == '\n' || c == '\t'
 	}
 
-	private fun readEndChar(): Boolean {
-		var lastChar: Char = this.buffer.get(this.index)
-		when (lastChar) {
-			',' -> {
-				readChar()
-				return true
-			}
+	private val reader = reader.buffered()
+	private var next: Char?
 
-			'}' -> {
-				readChar()
-				this.nestingLevel--
-				if (0 == this.nestingLevel && this.index != this.buffer.size) {
-					throw Exception("invalid string${this.buffer.size}")
-				} else if (this.index < this.buffer.size) {
-					readChar()
-					return true
-				} else {
-					return false
-				}
-			}
+	init {
+		val c = reader.read()
+		next = if (c == -1) null else c.toChar()
+	}
 
-			else -> {
+	private fun nextChar(): Char {
+		if (isDone()) throw IllegalStateException("Cannot get next char: EOF reached")
+		val c = next!!
+		next = reader.read().let { if (it == -1) null else it.toChar() }
+		index++
+		return c
+	}
 
-				throw Exception("parse error")
+	private fun peekChar(): Char {
+		if (isDone()) throw IllegalStateException("Cannot peek next char: EOF reached")
+		return next!!
+	}
+
+	fun isDone(): Boolean = next == null
+
+
+	private fun readString(): String {
+		var str: String = nextChar().toString()
+		do {
+			str += nextChar()
+		} while (!next!!.equals('\"'))
+		return str
+	}
+
+	private fun readNumber(): Any {
+		var str: String = ""
+		var isDigit: Boolean = false
+		do {
+			var c = nextChar()
+			str += c
+			if (c.toChar().equals('.')) {
+				isDigit = true
 			}
+		} while (!next!!.equals(',') && !next!!.equals('}') && !next!!.equals(']'))
+
+		if (!isDigit) {
+			var a: Int? = str.toIntOrNull()
+			if (null == a) throw Exception("invalid number") else return a
+		} else {
+			var a: Double? = str.toDoubleOrNull()
+			if (null == a) throw Exception("invalid number") else return a
 		}
 	}
 
-	private fun readData(): Any? {
-		var firstChar: Char = this.buffer.get(this.index)
-		when (firstChar) {
+
+	private fun readNull(): Any? {
+		var str: String = nextChar().toString()
+		str += nextChar()
+		str += nextChar()
+		str += nextChar()
+
+		if (!str.toLowerCase().equals("null")) {
+			throw Exception("invalid null")
+		}
+		return null
+	}
+
+	private fun readJsonArray(): JsonArray {
+		var result = JsonArray()
+		var leftBrace = nextChar()
+		do {
+			val value = readValue()
+			result.add(value)
+			if (",".equals(next.toString())) {
+				var comma = nextChar()
+			}
+		} while (!next!!.equals(']'))
+		var rightBrace = nextChar()
+		return result
+	}
+
+	private fun readJsonObject(): JsonObject {
+		var result = JsonObject()
+
+		var leftBrace = nextChar()
+
+		do {
+			var leftBracket = nextChar()
+
+			var key = readString()
+			var rightBracket = nextChar()
+			var collon = nextChar()
+
+			var value = readValue()
+			result.add(key, value)
+			if (",".equals(next.toString())) {
+				var comma = nextChar()
+			}
+		} while (!next!!.equals('}'))
+
+		var rightBrace = nextChar()
+
+		return result
+	}
+
+	private fun readValue(): Any? {
+		var c: Char = peekChar()
+		when (c) {
 		//string
 			'\"' -> {
-				return readString()
+				var leftBrace = nextChar()
+				var value = readString()
+				var rightBrace = nextChar()
+				return value
 			}
 		//json array
 			'[' -> {
-
+				return readJsonArray()
 			}
 		//json object
 			'{' -> {
-				this.nestingLevel++
 				return readJsonObject()
 			}
 		//number
@@ -102,104 +145,40 @@ class JsonParser {
 		throw Exception("Parse Error")
 	}
 
-	private fun readJsonObject(): JsonObject {
-		var result = JsonObject()
-		readChar()
-		var name = readName()
-		var data = readData()
-		result.add(name, data)
-		if ('}'.equals(buffer.get(this.index))) {
-			readChar()
-			this.nestingLevel--
-		}
-		return result
-	}
-
 	private fun readLiteral(): Boolean {
-		var str: String = readChar().toString()
-		str += readChar().toString()
-		str += readChar().toString()
-		str += readChar().toString()
+		var str: String = nextChar().toString()
+		str += nextChar()
+		str += nextChar()
+		str += nextChar()
 
-		if (str.equals("true")) {
+		if ("true".equals(str.toLowerCase())) {
 			return true
-		}
-		str += readChar().toString()
-		if (str.equals("false")) {
+		} else if ("fals".equals(str.toLowerCase()) && "e".equals(peekChar())) {
+			nextChar()
 			return false
+		} else {
+			throw Exception("invalid literal")
 		}
-		throw Exception("invalid literal")
 	}
 
-	private fun readNull(): Any? {
-		var str: String = readChar().toString()
-		str += readChar().toString()
-		str += readChar().toString()
-		str += readChar().toString()
-
-		if (!str.equals("null")) {
-			throw Exception("invalid null")
+	fun getResult(): Any? {
+		if ('{'.equals(next)) {
+			return readJsonObject()
+		} else if ('['.equals(next)) {
+			return readJsonArray()
 		}
 		return null
 	}
+}
 
-	private fun readNumber(): Any {
-		var str: String = ""
-		var isDigit: Boolean = false
-		do {
-			var c = readChar()
-			str += c
-			if (c.equals(".")) {
-				isDigit = true
+class JsonParser {
+	fun parse(rawValue: StringBuilder): Any? =
+			StringReader(rawValue.toString()).use {
+				parse(it)
 			}
-		} while (!this.buffer.get(this.index).equals(',') && !this.buffer.get(this.index).equals('}'))
 
-		if (!isDigit) {
-			var a: Int? = str.toIntOrNull()
-			if (null == a) throw Exception("invalid number") else return a
-		} else {
-			var a: Double? = str.toDoubleOrNull()
-			if (null == a) throw Exception("invalid number") else return a
-		}
-	}
-
-	private fun readString(): String {
-		if (!readChar().equals('\"')) {
-			throw Exception("")
-		}
-		var str: String = readChar().toString()
-		do {
-			str += readChar()
-		} while (!buffer.get(this.index).equals('\"'))
-		readChar()
-		return str
-	}
-
-
-	private fun readName(): String {
-		if (!readChar().equals('\"')) {
-			throw Exception("")
-		}
-		var name: String = readChar().toString()
-		do {
-			name += readChar()
-		} while (!this.buffer.get(this.index).equals('\"'))
-		readChar()
-		if (!readChar().equals(':')) {
-			throw Exception("")
-		}
-		return name
-	}
-
-	private fun init(jsonString: String) {
-		this.buffer = jsonString.toCharArray()
-		this.currentOffset = 0
-		this.index = 0
-		this.nestingLevel = 0
-	}
-
-
-	private fun readChar(): Char {
-		return this.buffer.get(this.index++)
+	fun parse(reader: Reader): Any? {
+		val manager: Manager = Manager(reader)
+		return manager.getResult()
 	}
 }

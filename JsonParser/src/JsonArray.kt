@@ -1,3 +1,5 @@
+import jdk.nashorn.internal.parser.JSONParser
+
 class JsonArray constructor() : JsonValue() {
 	var values: MutableList<JsonValue> = mutableListOf()
 
@@ -5,20 +7,25 @@ class JsonArray constructor() : JsonValue() {
 		this.values = jsonArray.values
 	}
 
-	override fun write(writer: JsonWriter): String {
-		writer.writeArrayOpen()
+	var sb: StringBuilder = StringBuilder()
+	override fun toJsonString(): String {
+		sb = StringBuilder()
+		write(this.sb)
+		return this.sb.toString()
+	}
+
+	override fun write(sb: StringBuilder) {
+		writeArrayOpen(sb)
 
 		var valuesIterator = this.values.iterator()
 		if (valuesIterator.hasNext()) {
-			valuesIterator.next().write(writer)
+			valuesIterator.next().write(sb)
 			while (valuesIterator.hasNext()) {
-				writer.writeArraySeparator()
-				valuesIterator.next().write(writer)
+				writeArraySeparator(sb)
+				valuesIterator.next().write(sb)
 			}
 		}
-		writer.writeArrayClose()
-
-		return writer.string
+		writeArrayClose(sb)
 	}
 
 	override fun isArray(): Boolean {
@@ -27,6 +34,24 @@ class JsonArray constructor() : JsonValue() {
 
 	override fun asArray(): JsonArray {
 		return this;
+	}
+
+	fun add(value: Any?): JsonArray {
+		when (value) {
+			is Int -> add(value)
+			is Long -> add(value)
+			is Double -> add(value)
+			is Float -> add(value)
+			is String -> add(value)
+			is Boolean -> add(value)
+			is JsonValue -> add(value)
+		}
+
+		return this
+	}
+
+	fun get(index: Int): Any? {
+		return this.values.get(index)
 	}
 
 	fun add(value: Int): JsonArray {

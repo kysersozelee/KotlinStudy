@@ -2,9 +2,17 @@ class JsonString(string: String?) : JsonValue() {
 
 	val string: String? = string
 
-	override fun write(writer: JsonWriter): String {
-		writer.writeString(this.string)
-		return writer.string
+	override fun toJsonString(): String {
+		return if(null == this.string) return "" else return this.string
+	}
+
+
+	override fun write(sb: StringBuilder) {
+		if (null != string) {
+			sb.append("\"").append(string).append("\"")
+		} else {
+			sb.append("null")
+		}
 	}
 
 	override fun isString(): Boolean {

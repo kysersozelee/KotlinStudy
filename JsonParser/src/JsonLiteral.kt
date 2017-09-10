@@ -2,9 +2,12 @@ class JsonLiteral(boolean: Boolean) : JsonValue() {
 
 	val value: Boolean = boolean
 
-	override fun write(writer: JsonWriter): String {
-		writer.writeLiteral(value)
-		return writer.string
+	override fun toJsonString(): String {
+		return value.toString()
+	}
+
+	override fun write(sb: StringBuilder) {
+		sb.append(value.toString())
 	}
 
 	override fun isTrue(): Boolean {

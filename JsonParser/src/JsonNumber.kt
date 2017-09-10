@@ -2,9 +2,12 @@ class JsonNumber(value: Any) : JsonValue() {
 
 	val value: Any = value
 
-	override fun write(writer: JsonWriter): String {
-		writer.writeNumber(this.value.toString())
-		return writer.string
+	override fun toJsonString(): String {
+		return value.toString()
+	}
+
+	override fun write(sb: StringBuilder) {
+		sb.append(this.value.toString())
 	}
 
 	override fun isNumber(): Boolean {

@@ -2,15 +2,15 @@
 # 2017/08/30 HW#1
 
 
-### JsonParser 만들기
-주의
+### JsonParser 
+APPLY
 1. Initialize
 2. NPE
 3. nullable
 4. no for loop
 5. use collection
 
-조건
+CONDITION
 1. 2 depth at least
 2. 4 elements at least
 

@@ -1,32 +1,40 @@
 class JsonObject : JsonValue() {
-	var names: MutableList<String> = mutableListOf()
+	var keys: MutableList<String> = mutableListOf()
 	var values: MutableList<JsonValue> = mutableListOf()
 
-	override fun write(writer: JsonWriter): String {
-		writer.writeObjectOpen()
+	var sb: StringBuilder = StringBuilder()
 
-		var namesIterator = this.names.iterator()
+	override fun toJsonString(): String {
+		sb = StringBuilder()
+		write(this.sb)
+		return this.sb.toString()
+	}
+
+
+	override fun write(sb: StringBuilder) {
+		writeObjectOpen(sb)
+
+		var keysIterator = this.keys.iterator()
 		var valuesIterator = this.values.iterator()
 
-		if (namesIterator.hasNext()) {
-			writer.writeMemberName(namesIterator.next())
-			writer.writeMemberSeparator()
-			valuesIterator.next().write(writer)
+		if (keysIterator.hasNext()) {
+			writeKey(keysIterator.next(), sb)
+			writeMemberSeparator(sb)
+			valuesIterator.next().write(sb)
 
 
-			while (namesIterator.hasNext()) {
-				writer.writeObjectSeparator()
-				writer.writeMemberName(namesIterator.next())
-				writer.writeMemberSeparator()
-				valuesIterator.next().write(writer)
+			while (keysIterator.hasNext()) {
+				writeObjectSeparator(sb)
+				writeKey(keysIterator.next(), sb)
+				writeMemberSeparator(sb)
+				valuesIterator.next().write(sb)
 			}
 		}
-		writer.writeObjectClose()
-		return writer.string
+		writeObjectClose(sb)
 	}
 
 	fun add(name: String, value: Any?): JsonObject {
-		this.names.add(name)
+		this.keys.add(name)
 		if (value is Int || value is Float || value is Double) {
 			this.values.add(JsonNumber(value))
 		} else if (null == value) {
@@ -53,7 +61,7 @@ class JsonObject : JsonValue() {
 	override fun equals(other: Any?): Boolean {
 		if (null == other || other !is JsonObject) return false
 
-		return this.names.equals(other) && this.values.equals(other)
+		return this.keys.equals(other) && this.values.equals(other)
 	}
 
 	fun get(name: String): JsonValue? {
@@ -62,7 +70,7 @@ class JsonObject : JsonValue() {
 
 	fun getValue(name: String): JsonValue? {
 		var idx: Int = 0
-		for (item: String in names) {
+		for (item: String in keys) {
 			if (name.equals(item)) {
 				return values.get(idx)
 			}
