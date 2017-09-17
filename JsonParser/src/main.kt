@@ -1,6 +1,9 @@
 import Json.*
 
+
 fun main(args: Array<String>) {
+	//kotlin에서 객체 선언하고 함수 호출하는 형식이 이와 같나
+
 	var jobj = JsonObject()
 	jobj.add("천정필", 29)
 	jobj.add("심현우", 30)
