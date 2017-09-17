@@ -1,3 +1,5 @@
+package Json
+
 class JsonNumber(value: Any) : JsonValue() {
 
 	val value: Any = value

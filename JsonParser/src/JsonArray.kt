@@ -1,4 +1,4 @@
-import jdk.nashorn.internal.parser.JSONParser
+package Json
 
 class JsonArray constructor() : JsonValue() {
 	var values: MutableList<JsonValue> = mutableListOf()

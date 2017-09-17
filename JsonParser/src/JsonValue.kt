@@ -1,3 +1,6 @@
+package Json
+
+//json에서 사용할 오브젝트의 인터페이스. 모든 key와 value를 object 단위로 파싱. 
 abstract class JsonValue {
 
 	val CONTROL_CHARACTERS_END: Int = 0x001f

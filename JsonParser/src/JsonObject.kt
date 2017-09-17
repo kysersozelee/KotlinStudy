@@ -1,3 +1,5 @@
+package Json
+
 class JsonObject : JsonValue() {
 	var keys: MutableList<String> = mutableListOf()
 	var values: MutableList<JsonValue> = mutableListOf()
@@ -35,20 +37,18 @@ class JsonObject : JsonValue() {
 
 	fun add(name: String, value: Any?): JsonObject {
 		this.keys.add(name)
-		if (value is Int || value is Float || value is Double) {
-			this.values.add(JsonNumber(value))
-		} else if (null == value) {
+
+		if (null == value) {
 			this.values.add(JsonString(value))
-		} else if (value is String) {
-			this.values.add(JsonString(value.toString()))
-		} else if (value is JsonObject) {
-			this.values.add(value)
-		} else if (value is Boolean) {
-			this.values.add(JsonLiteral(value))
-		} else if (value is JsonArray) {
-			this.values.add(JsonArray(value))
 		} else {
-			throw Exception("Invalid type of value")
+			when (value) {
+				is Int, Float, Double -> this.values.add(JsonNumber(value))
+				is String -> this.values.add(JsonString(value.toString()))
+				is JsonObject -> this.values.add(value)
+				is Boolean -> this.values.add(JsonLiteral(value))
+				is JsonArray -> this.values.add(JsonArray(value))
+				else -> throw Exception("Invalid type of value")
+			}
 		}
 
 		return this

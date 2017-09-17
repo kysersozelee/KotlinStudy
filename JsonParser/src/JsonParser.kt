@@ -1,14 +1,25 @@
-import java.io.*
+package Json
+
+import kotlin.io.*
+
+//json parser 가 상태 값을 갖지 않도록 하기 위해 Parser 클래스 분리
+class JsonParser {
+	fun parse(reader: String): Any? {
+		val parser: Parser = Parser(reader)
+		return parser.getResult()
+	}
+}
 
 
-class Manager(reader: Reader) {
+//파싱 하고 있는 string에 대한 상태를 갖고 있으며 파싱 메소드들을 포함
+class Parser(message: String) {
 	var index = 1
 
 	fun isSpace(c: Char): Boolean {
 		return c == ' ' || c == '\r' || c == '\n' || c == '\t'
 	}
 
-	private val reader = reader.buffered()
+	private val reader = message.reader().buffered()
 	private var next: Char?
 
 	init {
@@ -73,6 +84,7 @@ class Manager(reader: Reader) {
 		return null
 	}
 
+
 	private fun readJsonArray(): JsonArray {
 		var result = JsonArray()
 		var leftBrace = nextChar()
@@ -80,10 +92,15 @@ class Manager(reader: Reader) {
 			val value = readValue()
 			result.add(value)
 			if (",".equals(next.toString())) {
-				var comma = nextChar()
+				nextChar()
 			}
 		} while (!next!!.equals(']'))
 		var rightBrace = nextChar()
+
+		if (leftBrace.equals("[") || rightBrace.equals("]")) {
+			throw Exception("Invalid string")
+		}
+
 		return result
 	}
 
@@ -99,14 +116,23 @@ class Manager(reader: Reader) {
 			var rightBracket = nextChar()
 			var collon = nextChar()
 
+			if (leftBracket.equals("\"") || rightBracket.equals("\"") || collon.equals(":")) {
+				throw Exception("Invalid string")
+			}
+
 			var value = readValue()
 			result.add(key, value)
 			if (",".equals(next.toString())) {
-				var comma = nextChar()
+				nextChar()
 			}
 		} while (!next!!.equals('}'))
 
 		var rightBrace = nextChar()
+
+
+		if (leftBrace.equals("{") || rightBrace.equals("}")) {
+			throw Exception("Invalid string")
+		}
 
 		return result
 	}
@@ -119,6 +145,10 @@ class Manager(reader: Reader) {
 				var leftBrace = nextChar()
 				var value = readString()
 				var rightBrace = nextChar()
+
+				if (leftBrace.equals("\"") || rightBrace.equals("\"")) {
+					throw Exception("Invalid string")
+				}
 				return value
 			}
 		//json array
@@ -168,17 +198,5 @@ class Manager(reader: Reader) {
 			return readJsonArray()
 		}
 		return null
-	}
-}
-
-class JsonParser {
-	fun parse(rawValue: StringBuilder): Any? =
-			StringReader(rawValue.toString()).use {
-				parse(it)
-			}
-
-	fun parse(reader: Reader): Any? {
-		val manager: Manager = Manager(reader)
-		return manager.getResult()
 	}
 }

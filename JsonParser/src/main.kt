@@ -1,4 +1,4 @@
-import com.beust.klaxon.Parser
+import Json.*
 
 fun main(args: Array<String>) {
 	var jobj = JsonObject()
@@ -26,11 +26,11 @@ fun main(args: Array<String>) {
 	println("json array serialize 		==> ${jarr.toJsonString()}")
 
 	var parser: JsonParser = JsonParser()
-	var parsedJobj: JsonObject = parser.parse(StringBuilder(jobj2.toJsonString())) as JsonObject
+	var parsedJobj: JsonObject = parser.parse(jobj2.toJsonString()) as JsonObject
 	var geniusJobj: JsonObject? = parsedJobj.get("genius")?.asObject()
 
 
-	var parsedJarr: JsonArray = parser.parse(StringBuilder(jarr.toJsonString())) as JsonArray
+	var parsedJarr: JsonArray = parser.parse(jarr.toJsonString()) as JsonArray
 
 
 	println("json object deserialize 	input jsonstr : ${jobj2.toJsonString()}	parsedJobj : ${parsedJobj.toJsonString()}	genius : ==> ${geniusJobj?.toJsonString()}")

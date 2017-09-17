@@ -3,16 +3,14 @@
 
 
 ### JsonParser 
-APPLY
 1. Initialize
 2. NPE
 3. nullable
 4. no for loop
 5. use collection
 
-CONDITION
-1. 2 depth at least
-2. 4 elements at least
+1. at least 2 depth 
+2. at least 4 elements 
 
 
  [Basic Syntax](https://kotlinlang.org/docs/reference/basic-syntax.html) 

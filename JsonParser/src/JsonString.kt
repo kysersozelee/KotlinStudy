@@ -1,11 +1,16 @@
+package Json
+
 class JsonString(string: String?) : JsonValue() {
 
 	val string: String? = string
 
 	override fun toJsonString(): String {
-		return if(null == this.string) return "" else return this.string
+		if (null == this.string) {
+			return ""
+		} else {
+			return this.string
+		}
 	}
-
 
 	override fun write(sb: StringBuilder) {
 		if (null != string) {

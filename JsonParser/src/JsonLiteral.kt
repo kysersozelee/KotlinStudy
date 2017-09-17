@@ -1,3 +1,5 @@
+package Json
+
 class JsonLiteral(boolean: Boolean) : JsonValue() {
 
 	val value: Boolean = boolean
